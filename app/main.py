@@ -3,7 +3,7 @@ from app.routers import health
 
 app = FastAPI(title='ChemREG lite')
 
-app.add_route(health.router)
+app.include_router(health.router)
 
 @app.get('/')
 def root():
