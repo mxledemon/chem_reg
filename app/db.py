@@ -36,6 +36,8 @@ def init_db():
                     updated_at text default current_timestamp
                     )
                 ''')
+        cur.execute('''
+                create unique index if not exists idx_molecules_inchikey_unique on molecules(inchikey)''')
         conn.commit()
 
         row = cur.execute('''
