@@ -1,12 +1,21 @@
 from fastapi import APIRouter, HTTPException
 from app.schemas import MoleculeCreate, MoleculeResponse, MoleculeUpdate
 from app.repositories import molecule_repository as mr
+from app.services.chemistry import derive_molecule_properties_from_smiles
 
 router = APIRouter(prefix='/molecules', tags=['molecules'])
 
 @router.post('', response_model=MoleculeResponse)
 def create_molecule(molecule: MoleculeCreate):
     molecule_data = molecule.model_dump()
+    try:
+        derived_molecule_data = derive_molecule_properties_from_smiles(molecule_data['smiles'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    for key, value in derived_molecule_data.items():
+        molecule_data[key] = value
+
     created_molecule = mr.create_molecule(molecule_data)
     if created_molecule is None:
         raise HTTPException(status_code=500, detail='Failed to create molecule')
