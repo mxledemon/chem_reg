@@ -20,10 +20,12 @@ def get_molecule_by_id(molecule_id: int):
         raise HTTPException(status_code=404, detail=f'Could not retrieve molecule with id {molecule_id}')
     return result
 
+
 @router.get('', response_model=list[MoleculeResponse])
 def get_molecules(limit: int = 10, offset: int = 0):
     result = mr.list_molecules(limit, offset)
     return result
+
 
 @router.put('/{molecule_id}', response_model=MoleculeResponse)
 def update_molecule(molecule_id: int, molecule_data: MoleculeUpdate):
@@ -32,6 +34,7 @@ def update_molecule(molecule_id: int, molecule_data: MoleculeUpdate):
     if result is None:
         raise HTTPException(status_code=404, detail='Could not update molecule')
     return result
+
 
 @router.delete('/{molecule_id}')
 def delete_molecule(molecule_id: int):
