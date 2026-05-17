@@ -226,4 +226,5 @@ data/*.sqlite3
 # Uploaded files generated during local testing
 data/uploads/*
 data/samples
+data/renders
 !data/uploads/.gitkeep

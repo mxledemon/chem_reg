@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from app.schemas import MoleculeCreate, MoleculeResponse, MoleculeUpdate
 from app.repositories import molecule_repository as mr
 from app.services.chemistry import derive_molecule_properties_from_smiles
 from app.services.molecule_registration import register_molecule_from_smiles, InvalidMoleculeError, DuplicateMoleculeError, MoleculeRegistrationError
+from app.services.molecule_rendering import render_molecule_png
 import sqlite3
 
 router = APIRouter(prefix='/molecules', tags=['molecules'])
@@ -48,3 +49,23 @@ def delete_molecule(molecule_id: int):
     if not result:
         raise HTTPException(status_code=404, detail=f'Could not delete molecule with id {molecule_id}')
     return {"deleted": True}
+
+
+#-------- VISUALIZATION ----------------
+
+@router.get("/{molecule_id}/image")
+def get_molecule_image(molecule_id: int):
+    molecule = mr.get_molecule_by_id(molecule_id)
+
+    if molecule is None:
+        raise HTTPException(status_code=404, detail="Molecule not found")
+
+    try:
+        image_bytes = render_molecule_png(
+            canonical_smiles=molecule["canonical_smiles"],
+            molblock=molecule["molblock"],
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    return Response(content=image_bytes, media_type="image/png")
