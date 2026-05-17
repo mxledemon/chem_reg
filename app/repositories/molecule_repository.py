@@ -87,3 +87,49 @@ def update_molecule(molecule_id: int, molecule_data: dict):
                     ))
         conn.commit()
         return get_molecule_by_id(molecule_id)
+
+
+def search_molecules(
+        name: str | None,
+        formula: str | None = None,
+        inchikey: str | None = None,
+        min_weight: float | None = None,
+        max_weight: float | None = None,
+        project: str | None = None,
+        chemist: str | None = None,
+) -> list[dict]:
+    query = 'select * from molecules where 1 = 1'
+    params = []
+
+    if name:
+        query += " and name like ?"
+        params.append(f'%{name}%')
+    if formula:
+        query += " AND formula = ?"
+        params.append(formula)
+
+    if inchikey:
+        query += " AND inchikey = ?"
+        params.append(inchikey)
+
+    if min_weight is not None:
+        query += " AND molecular_weight >= ?"
+        params.append(min_weight)
+
+    if max_weight is not None:
+        query += " AND molecular_weight <= ?"
+        params.append(max_weight)
+
+    if project:
+        query += " AND project LIKE ?"
+        params.append(f"%{project}%")
+
+    if chemist:
+        query += " AND chemist LIKE ?"
+        params.append(f"%{chemist}%")
+
+    query += " ORDER BY id"
+
+    with get_conn() as conn:
+        rows = conn.execute(query, params).fetchall()
+        return [dict(row) for row in rows]
