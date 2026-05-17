@@ -1,55 +1,73 @@
 from app.services.sdf_parser import parse_sdf_file
-from app.services.chemistry import derive_molecule_properties_from_smiles
-from app.repositories import molecule_repository as mr
-from rdkit import Chem
+from app.services.molecule_registration import (
+    DuplicateMoleculeError,
+    MoleculeRegistrationError,
+    register_molecule_data,
+)
 
 
-def register_molecules_from_sdf(file_path: str, filename: str):
+def build_registration_data_from_sdf_record(record: dict) -> dict:
+    return {
+        "name": record["name"],
+        "smiles": record["smiles"],
+        "canonical_smiles": record["canonical_smiles"],
+        "formula": record["formula"],
+        "molecular_weight": record["molecular_weight"],
+        "inchi": record["inchi"],
+        "inchikey": record["inchikey"],
+        "molblock": record["molblock"],
+    }
+
+
+def register_molecules_from_sdf(file_path: str, filename: str) -> dict:
     registered = []
     duplicates = []
     failed = []
 
     parsed_result = parse_sdf_file(file_path)
+    parsed_molecules = parsed_result["molecules"]
 
-    # print(parsed_result['molecules'])
-    print(parsed_result.keys())
-
-    for idx, parsed_molecule in enumerate(parsed_result['molecules'], start=1):
+    for idx, parsed_molecule in enumerate(parsed_molecules, start=1):
         try:
+            molecule_data = build_registration_data_from_sdf_record(
+                parsed_molecule
+            )
 
-            derived_data = derive_molecule_properties_from_smiles(parsed_molecule['smiles'])
+            created_molecule = register_molecule_data(molecule_data)
 
-            molecule_data = {
-                'name': parsed_molecule['name'],
-                **derived_data,
-            }
+            registered.append({
+                "record_index": idx,
+                "molecule": created_molecule,
+            })
 
-            # Check if duplicate using the inchikey check function from molecule repository
-            # If duplicate, add to duplicates and continue to next
-            # If new move to register
+        except DuplicateMoleculeError as e:
+            duplicates.append({
+                "record_index": idx,
+                "name": parsed_molecule.get("name"),
+                "detail": e.detail,
+            })
 
-            existing_molecule = mr.find_molecule_by_inchikey(molecule_data['inchikey'])
-
-            if existing_molecule:
-                duplicates.append(molecule_data)
-                continue
-            mr.create_molecule(molecule_data)
-            registered.append(molecule_data)
+        except MoleculeRegistrationError as e:
+            failed.append({
+                "record_index": idx,
+                "name": parsed_molecule.get("name"),
+                "error": str(e),
+            })
 
         except Exception as e:
             failed.append({
-                'record_index': idx,
-                'name': parsed_molecule['name'] if isinstance(parsed_molecule, dict) else None,
-                'error': str(e)
+                "record_index": idx,
+                "name": parsed_molecule.get("name") if isinstance(parsed_molecule, dict) else None,
+                "error": str(e),
             })
-    
+
     return {
-        'filename': filename,
-        'total_records': len(parsed_result['molecules']),
-        'registered_count': len(registered),
-        'duplicate_count': len(duplicates),
-        'failed_count': len(failed),
-        'registered': registered,
-        'duplicates': duplicates,
-        'failed': failed
+        "filename": filename,
+        "total_records": len(parsed_molecules),
+        "registered_count": len(registered),
+        "duplicate_count": len(duplicates),
+        "failed_count": len(failed),
+        "registered": registered,
+        "duplicates": duplicates,
+        "failed": failed,
     }
