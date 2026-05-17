@@ -1,9 +1,15 @@
-from app.services.chemistry import derive_molecule_properties_from_smiles
+from app.services.sdf_parser import *
 
-try:
-    props = derive_molecule_properties_from_smiles('not_a_smiles')
-except ValueError as e:
-    print(e)
-for key, value in props.items():
-    print("\n---", key, "---")
-    print(value)
+result = parse_sdf_file('data/samples/pubchem_short_multi.sdf')
+
+print('Molecules:', len(result['molecules']))
+print('Errors:', len(result['errors']))
+
+for molecule in result['molecules']:
+    print(
+        molecule['record_index'],
+        molecule['name'],
+        molecule['formula'],
+        molecule['inchikey'],
+        len(molecule['sdf_properties'])
+    )
