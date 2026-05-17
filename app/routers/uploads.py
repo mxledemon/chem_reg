@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pathlib import Path
+from app.services.sdf_registration import register_molecules_from_sdf
 
 router = APIRouter(prefix='/uploads', tags=['uploads'])
 
@@ -28,9 +29,19 @@ def upload_sdf(file: UploadFile = File(...)):
     with open(destination, 'wb') as buffer:
         buffer.write(contents)
 
+    try:
+        registration_result = register_molecules_from_sdf(
+            file_path=str(destination),
+            filename=safe_filename
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Failed to register molecules from SDF: {e}') from e
+
     return {
         'filename': safe_filename,
         'content_type': file.content_type,
         'size_bytes': len(contents),
-        'saved_path': str(destination)
+        'saved_path': str(destination),
+        'registration': registration_result
     }
