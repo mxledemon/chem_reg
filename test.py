@@ -1,15 +1,33 @@
-from app.services.sdf_parser import *
+from app.services.sdf_registration import register_molecules_from_sdf
+from pprint import pprint
+import sqlite3
 
-result = parse_sdf_file('data/samples/pubchem_short_multi.sdf')
 
-print('Molecules:', len(result['molecules']))
-print('Errors:', len(result['errors']))
+TEST_INCHIKEYS = [
+    "BSYNRYMUTXBXSQ-UHFFFAOYSA-N",  # aspirin / 2-acetoxybenzoic acid
+    "RYYVLZVUVIJVGH-UHFFFAOYSA-N",  # caffeine
+    "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",  # ethanol
+]
 
-for molecule in result['molecules']:
-    print(
-        molecule['record_index'],
-        molecule['name'],
-        molecule['formula'],
-        molecule['inchikey'],
-        len(molecule['sdf_properties'])
-    )
+
+conn = sqlite3.connect("data/chemreg.db")
+cursor = conn.cursor()
+
+cursor.execute(
+    """
+    DELETE FROM molecules
+    WHERE inchikey IN (?, ?, ?)
+    """,
+    TEST_INCHIKEYS,
+)
+
+conn.commit()
+conn.close()
+
+
+result = register_molecules_from_sdf(
+    "data/samples/pubchem_short_multi.sdf",
+    "pubchem_short_multi.sdf"
+)
+
+pprint(result, sort_dicts=False)
