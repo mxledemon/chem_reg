@@ -227,4 +227,5 @@ data/*.sqlite3
 data/uploads/*
 data/samples
 data/renders
+tests/data
 !data/uploads/.gitkeep
