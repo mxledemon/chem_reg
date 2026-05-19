@@ -589,3 +589,25 @@ From Swagger UI, try:
 4. `GET /search/molecules`
 5. `POST /uploads/sdf`
 6. `GET /molecules/{molecule_id}/image`
+
+
+## Known Limitations
+
+This project is a first-version, learning-focused molecule registration API. It demonstrates core registration workflows, API design, SDF upload handling, duplicate detection, and basic chemistry property generation, but it is not intended to be a production-ready chemical registration system.
+
+Current limitations include:
+
+- **Salt and parent handling is not implemented**  
+  Molecules are registered as provided. The system does not currently strip salts, identify parent structures, normalize mixtures, or manage salt/solvate relationships.
+
+- **Stereochemistry handling is basic**  
+  The system relies on RDKit-derived identifiers and canonicalization, but it does not implement advanced stereochemistry review, manual curation, enhanced stereo groups, or business-specific stereochemical rules.
+
+- **Structure search is not implemented**  
+  The API supports text and property-based search, but it does not currently support substructure search, similarity search, exact structure search, or chemical drawing/query workflows.
+
+- **Authentication and authorization are not implemented**  
+  The API does not currently include login, user roles, permissions, audit trails, or access control.
+
+- **This is a learning-focused system**  
+  The goal of the project is to explore FastAPI, SQLite, RDKit, testing, API design, and molecule registration concepts. It intentionally keeps the scope small and understandable rather than attempting to match enterprise cheminformatics platforms.
