@@ -1,8 +1,10 @@
+import os
 import sqlite3
 from pathlib import Path
 
 DATA_DIR = Path('data')
-DB_PATH = DATA_DIR / 'chemreg.db'
+DEFAULT_DB_PATH = DATA_DIR / 'chemreg.db'
+DB_PATH = Path(os.getenv('CHEMREG_DB_PATH', str(DEFAULT_DB_PATH)))
 
 
 def get_conn():
